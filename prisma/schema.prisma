@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   @default("Mock User")
+  email     String   @unique @default("user@example.com")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects           Project[]
+  documents          Document[]
+  studyPlans         StudyPlan[]
+  recitationSessions RecitationSession[]
+  userUnitProgress   UserUnitProgress[]
+  modelSettings      UserModelSettings?
+  agentSettings      AgentSettings?
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  title     String
+  subject   String?
+  targetDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  documents  Document[]
+  studyPlans StudyPlan[]
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  sourceType String  @default("paste") // "paste" | "upload"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  units RecitationUnit[]
+}
+
+model RecitationUnit {
+  id               String   @id @default(uuid())
+  title            String
+  sourceText       String
+  keywords         String   // JSON array of keywords
+  recitationType   String   @default("free") // "free" | "qa" | "fill-blank"
+  difficulty       Int      @default(1) // 1-5
+  estimatedMinutes Int      @default(5)
+  order            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  studyPlanItems   StudyPlanItem[]
+  userUnitProgress UserUnitProgress[]
+  recitationSessions RecitationSession[]
+}
+
+model StudyPlan {
+  id        String   @id @default(uuid())
+  targetDate DateTime?
+  dailyMinutes Int    @default(30)
+  recitationMode String @default("sequential") // "sequential" | "random" | "spaced"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items StudyPlanItem[]
+}
+
+model StudyPlanItem {
+  id        String   @id @default(uuid())
+  scheduledDate DateTime?
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  studyPlanId       String
+  studyPlan         StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  recitationUnitId  String
+  recitationUnit    RecitationUnit @relation(fields: [recitationUnitId], references: [id], onDelete: Cascade)
+}
+
+model RecitationSession {
+  id        String   @id @default(uuid())
+  status    String   @default("in_progress") // "in_progress" | "completed" | "paused"
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String
+  unit      RecitationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  attempts RecitationAttempt[]
+}
+
+model RecitationAttempt {
+  id        String   @id @default(uuid())
+  userInput String
+  score     Int      @default(0) // 0-100
+  passed    Boolean  @default(false)
+  missingKeywords String? // JSON array
+  feedback  String?
+  nextAction String? // "review" | "next" | "repeat"
+  createdAt DateTime @default(now())
+
+  sessionId String
+  session   RecitationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model UserUnitProgress {
+  id              String   @id @default(uuid())
+  masteryLevel    Int      @default(0) // 0-100
+  attemptsCount   Int      @default(0)
+  lastScore       Int?
+  bestScore       Int?
+  status          String   @default("not_started") // "not_started" | "learning" | "reviewing" | "mastered"
+  nextReviewAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId String
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId String
+  unit   RecitationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unitId])
+}
+
+model UserModelSettings {
+  id             String   @id @default(uuid())
+  baseUrl        String   @default("https://api.openai.com/v1")
+  apiKey         String   @default("")
+  chatModel      String   @default("gpt-4o-mini")
+  embeddingModel String   @default("text-embedding-3-small")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AgentSettings {
+  id             String   @id @default(uuid())
+  persona        String   @default("encouraging_tutor")
+  strictness     String   @default("medium") // "low" | "medium" | "high"
+  hintLevel      String   @default("moderate") // "minimal" | "moderate" | "detailed"
+  feedbackLength String   @default("concise") // "concise" | "detailed" | "comprehensive"
+  language       String   @default("auto") // "auto" | "en" | "zh" | "ja" etc.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
