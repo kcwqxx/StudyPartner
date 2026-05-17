@@ -18,7 +18,11 @@ import {
   Save,
   Sparkles,
   Loader2,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
+
 
 function ReviewUnitsContent() {
   const router = useRouter();
@@ -32,6 +36,9 @@ function ReviewUnitsContent() {
   const [editingUnit, setEditingUnit] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
+  const [regeneratingUnitId, setRegeneratingUnitId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch all documents with units
@@ -46,6 +53,7 @@ function ReviewUnitsContent() {
       })
       .catch(console.error);
   }, []);
+
 
   useEffect(() => {
     if (selectedDocId) {
@@ -107,6 +115,72 @@ function ReviewUnitsContent() {
       setSaving(false);
     }
   }
+
+  async function deleteUnit(unitId: string) {
+    setDeletingUnitId(unitId);
+    try {
+      const res = await fetch(`/api/documents/${selectedDocId}/units`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unitId }),
+      });
+
+      if (res.ok) {
+        setConfirmDeleteId(null);
+        fetchUnits(selectedDocId);
+      }
+    } catch (error) {
+      console.error("Failed to delete unit:", error);
+    } finally {
+      setDeletingUnitId(null);
+    }
+  }
+
+  async function regenerateUnit(unitId: string) {
+    setRegeneratingUnitId(unitId);
+    try {
+      // First delete the old unit
+      await fetch(`/api/documents/${selectedDocId}/units`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unitId }),
+      });
+
+      // Then regenerate all units (the API will skip existing ones)
+      // We need to delete all units and regenerate
+      const res = await fetch(`/api/documents/${selectedDocId}/generate-units`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        fetchUnits(selectedDocId);
+      } else {
+        const data = await res.json();
+        if (data.error === "Units already generated for this document") {
+          // If units already exist, we need a different approach
+          // Delete all units and regenerate
+          for (const u of units) {
+            await fetch(`/api/documents/${selectedDocId}/units`, {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ unitId: u.id }),
+            });
+          }
+          const retryRes = await fetch(`/api/documents/${selectedDocId}/generate-units`, {
+            method: "POST",
+          });
+          if (retryRes.ok) {
+            fetchUnits(selectedDocId);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to regenerate unit:", error);
+    } finally {
+      setRegeneratingUnitId(null);
+    }
+  }
+
 
   const difficultyOptions = [
     { value: "1", label: "1 - 非常简单" },
@@ -214,7 +288,7 @@ function ReviewUnitsContent() {
                         </CardDescription>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       {progress && (
                         <Badge
                           variant={
@@ -238,10 +312,25 @@ function ReviewUnitsContent() {
                         variant="ghost"
                         size="icon"
                         onClick={() => startEdit(unit)}
+                        title="编辑"
                       >
                         <Edit3 className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setConfirmDeleteId(unit.id)}
+                        disabled={deletingUnitId === unit.id}
+                        title="删除"
+                      >
+                        {deletingUnitId === unit.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        )}
+                      </Button>
                     </div>
+
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -372,8 +461,37 @@ function ReviewUnitsContent() {
                           </Badge>
                         ))}
                       </div>
+
+                      {/* 删除确认 */}
+                      {confirmDeleteId === unit.id && (
+                        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                          <span className="text-sm text-red-600 dark:text-red-400 flex-1">
+                            确定要删除这个单元吗？
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            取消
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteUnit(unit.id)}
+                            disabled={deletingUnitId === unit.id}
+                          >
+                            {deletingUnitId === unit.id ? (
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            ) : null}
+                            确认删除
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
+
                 </CardContent>
               </Card>
             );
