@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { Loader2, Save, Bot } from "lucide-react";
+import { Loader2, Save, Bot, User } from "lucide-react";
 
 export default function AgentSettingsPage() {
   const [settings, setSettings] = useState({
@@ -16,6 +16,7 @@ export default function AgentSettingsPage() {
     feedbackLength: "concise",
     language: "auto",
     customPersona: "",
+    partnerName: "AI 背诵教练",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,6 +38,7 @@ export default function AgentSettingsPage() {
           feedbackLength: data.feedbackLength || "concise",
           language: data.language || "auto",
           customPersona: data.customPersona || "",
+          partnerName: data.partnerName || "AI 背诵教练",
         });
       }
     } catch (error) {
@@ -145,22 +147,23 @@ export default function AgentSettingsPage() {
             </p>
           </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">自定义教练风格</label>
-            <Textarea
-              placeholder={`例如：你是一位严格的军事教官，要求准确率在95%以上才能通过。用简洁有力的语言给出评价，偶尔鼓励但保持高标准。`}
-              value={settings.customPersona}
-              onChange={(e) =>
-                setSettings({ ...settings, customPersona: e.target.value })
-              }
-              rows={4}
-              disabled={settings.persona !== "custom"}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              您可以自由编写教练的个性和行为描述。格式不限，AI 会按照您的指令行事。
-              选择"自定义风格"后，此输入才会生效。
-            </p>
-          </div>
+          {/* 自定义教练风格 - 仅在选择"自定义风格"时显示 */}
+          {settings.persona === "custom" && (
+            <div>
+              <label className="text-sm font-medium mb-1 block">自定义教练风格</label>
+              <Textarea
+                placeholder={`例如：你是一位严格的军事教官，要求准确率在95%以上才能通过。用简洁有力的语言给出评价，偶尔鼓励但保持高标准。`}
+                value={settings.customPersona}
+                onChange={(e) =>
+                  setSettings({ ...settings, customPersona: e.target.value })
+                }
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                您可以自由编写教练的个性和行为描述。格式不限，AI 会按照您的指令行事。
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="text-sm font-medium mb-1 block">严格程度</label>
@@ -220,6 +223,53 @@ export default function AgentSettingsPage() {
             </p>
           </div>
 
+          <Button onClick={handleSave} disabled={saving} className="w-full">
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                保存中...
+              </>
+            ) : saved ? (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                已保存！
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                保存设置
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* 背诵搭子名字设置卡片 */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            背诵搭子
+          </CardTitle>
+          <CardDescription>
+            为您的 AI 背诵搭子取一个名字，它将出现在背诵聊天中。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">搭子名字</label>
+            <Input
+              placeholder="输入您想要的搭子名字..."
+              value={settings.partnerName}
+              onChange={(e) =>
+                setSettings({ ...settings, partnerName: e.target.value })
+              }
+              maxLength={50}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              这个名字将显示在背诵聊天界面中，作为您的 AI 背诵搭子的称呼。
+            </p>
+          </div>
           <Button onClick={handleSave} disabled={saving} className="w-full">
             {saving ? (
               <>

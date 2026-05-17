@@ -41,6 +41,7 @@ export async function getAgentSystemPrompt(userId: string = MOCK_USER_ID): Promi
   const feedbackLength = settings?.feedbackLength || "concise";
   const language = settings?.language || "auto";
   const customPersona = settings?.customPersona;
+  const partnerName = settings?.partnerName || "AI 背诵教练";
 
   const personaMap: Record<string, string> = {
     encouraging_tutor: "你是一位鼓励和支持学生的导师，激励学生做到最好。",
@@ -78,7 +79,7 @@ export async function getAgentSystemPrompt(userId: string = MOCK_USER_ID): Promi
     personaInstruction = customPersona.trim();
   }
 
-  return `你是AI背诵教练，用于学习伙伴应用。
+  return `你是${partnerName}，用于学习伙伴应用。
 
 ${personaInstruction}
 

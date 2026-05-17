@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getMockUserId();
     const body = await request.json();
-    const { persona, strictness, hintLevel, feedbackLength, language, customPersona } = body;
+    const { persona, strictness, hintLevel, feedbackLength, language, customPersona, partnerName } = body;
 
     const settings = await prisma.agentSettings.upsert({
       where: { userId },
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
         ...(feedbackLength !== undefined && { feedbackLength }),
         ...(language !== undefined && { language }),
         ...(customPersona !== undefined && { customPersona }),
+        ...(partnerName !== undefined && { partnerName }),
       },
       create: {
         userId,
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
         feedbackLength: feedbackLength || "concise",
         language: language || "auto",
         customPersona: customPersona || null,
+        partnerName: partnerName || "AI 背诵教练",
       },
     });
 

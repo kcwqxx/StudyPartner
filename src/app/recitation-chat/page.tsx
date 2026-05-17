@@ -49,7 +49,12 @@ function RecitationChatContent() {
   const [evaluating, setEvaluating] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [currentUnit, setCurrentUnit] = useState<any>(null);
+  const [partnerName, setPartnerName] = useState("AI 背诵教练");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchAgentSettings();
+  }, []);
 
   useEffect(() => {
     if (selectedUnitId) {
@@ -60,6 +65,20 @@ function RecitationChatContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  async function fetchAgentSettings() {
+    try {
+      const res = await fetch("/api/settings/agent");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.partnerName) {
+          setPartnerName(data.partnerName);
+        }
+      }
+    } catch (error) {
+      console.error("获取教练设置失败:", error);
+    }
+  }
 
   async function loadUnit(unitId: string) {
     setLoading(true);
@@ -83,7 +102,7 @@ function RecitationChatContent() {
             role: "coach",
             content: `📚 **开始背诵！**
 
-我来担任您的教练。以下是我们今天的学习内容：
+我是${partnerName}，今天由我来担任您的背诵搭子。以下是我们今天的学习内容：
 
 **单元：** ${data.unit.title}
 **类型：** ${data.unit.recitationType}
@@ -126,46 +145,13 @@ ${keywords.map((k: string) => `- ${k}`).join("\n")}
       const data = await res.json();
       const evalData = data.evaluation;
 
+      // 直接使用 LLM 根据人设生成的完整个性化反馈
+      // 不再用硬编码模板覆盖，这样自定义人设的风格才能完整展现
       const coachMessage: Message = {
         role: "coach",
-        content: "",
+        content: evalData.feedback,
         evaluation: evalData,
       };
-
-      // 根据评估结果构建教练回复
-      let coachResponse = "";
-
-      if (evalData.passed) {
-        coachResponse += `✅ **做得好！您通过了！** (得分：${evalData.score}/100)\n\n`;
-        if (evalData.score >= 80) {
-          coachResponse += "太棒了！您对这部分内容掌握得很好。🌟\n\n";
-        } else {
-          coachResponse += "不错！您掌握了主要的要点，但还有提升空间。\n\n";
-        }
-      } else {
-        coachResponse += `❌ **还差一点。** (得分：${evalData.score}/100)\n\n`;
-        coachResponse += "别担心！我们来看看哪些地方需要加强。\n\n";
-      }
-
-      if (evalData.missingKeywords && evalData.missingKeywords.length > 0) {
-        coachResponse += `**薄弱或遗漏的知识点：**\n`;
-        evalData.missingKeywords.forEach((kw: string) => {
-          coachResponse += `- ${kw}\n`;
-        });
-        coachResponse += "\n";
-      }
-
-      coachResponse += `**反馈：** ${evalData.feedback}\n\n`;
-
-      if (evalData.nextAction === "next") {
-        coachResponse += "🎉 您已经准备好进入下一个单元了！";
-      } else if (evalData.nextAction === "repeat") {
-        coachResponse += "🔄 让我们再试一次。复习重点概念，再试一次！";
-      } else {
-        coachResponse += "📖 花点时间复习材料，然后再次尝试。";
-      }
-
-      coachMessage.content = coachResponse;
       setMessages((prev) => [...prev, coachMessage]);
     } catch (error) {
       console.error("评估错误:", error);
@@ -210,9 +196,9 @@ ${keywords.map((k: string) => `- ${k}`).join("\n")}
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">AI 背诵教练</h1>
+        <h1 className="text-3xl font-bold">背诵搭子</h1>
         <p className="text-muted-foreground mt-1">
-          您的个人 AI 教练将引导您完成背诵练习。
+          您的个人 AI 背诵搭子 {partnerName} 将引导您完成背诵练习。
         </p>
       </div>
 
@@ -222,7 +208,7 @@ ${keywords.map((k: string) => `- ${k}`).join("\n")}
             <Brain className="h-16 w-16 mx-auto mb-4 text-primary opacity-70" />
             <h2 className="text-xl font-semibold mb-2">准备开始背诵了吗？</h2>
             <p className="text-muted-foreground mb-6">
-              从学习计划中选择一个单元开始背诵。AI 教练将全程引导您。
+              从学习计划中选择一个单元开始背诵。{partnerName} 将全程引导您。
             </p>
             <div className="flex flex-col items-center gap-3">
               <Button onClick={() => router.push("/study-plan")}>
@@ -288,7 +274,7 @@ ${keywords.map((k: string) => `- ${k}`).join("\n")}
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-primary" />
                         <span className="text-xs font-semibold text-primary">
-                          AI 教练
+                          {partnerName}
                         </span>
                       </div>
                     )}
@@ -361,7 +347,7 @@ ${keywords.map((k: string) => `- ${k}`).join("\n")}
                     <div className="flex items-center gap-2">
                       <Brain className="h-4 w-4 text-primary animate-pulse" />
                       <span className="text-sm text-muted-foreground">
-                        正在评估您的回答...
+                        {partnerName} 正在评估您的回答...
                       </span>
                       <Loader2 className="h-3 w-3 animate-spin" />
                     </div>

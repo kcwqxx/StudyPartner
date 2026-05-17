@@ -54,12 +54,19 @@ Evaluate the student's response based on:
 2. Semantic accuracy: Did they understand the concepts correctly?
 3. Logical completeness: Did they provide a complete and coherent answer?
 
+IMPORTANT: The "feedback" field will be displayed directly to the student as the coach's complete response. It should be a complete, natural message that:
+- Starts with an appropriate greeting or reaction based on your persona (e.g., ✅/❌ emoji + score)
+- Lists any missing keywords if applicable
+- Provides constructive feedback in your persona's voice
+- Ends with a clear next step suggestion
+- Use markdown formatting for readability
+
 Respond with a JSON object in this exact format:
 {
   "score": number (0-100),
   "passed": boolean (true if score >= 60),
   "missing_keywords": string[] (list of keywords that were missed or poorly explained),
-  "feedback": string (constructive feedback for the student),
+  "feedback": string (complete coach response in your persona's voice, with markdown formatting),
   "next_action": "review" | "next" | "repeat"
 }`;
 
