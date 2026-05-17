@@ -109,25 +109,25 @@ function ReviewUnitsContent() {
   }
 
   const difficultyOptions = [
-    { value: "1", label: "1 - Very Easy" },
-    { value: "2", label: "2 - Easy" },
-    { value: "3", label: "3 - Medium" },
-    { value: "4", label: "4 - Hard" },
-    { value: "5", label: "5 - Very Hard" },
+    { value: "1", label: "1 - 非常简单" },
+    { value: "2", label: "2 - 简单" },
+    { value: "3", label: "3 - 中等" },
+    { value: "4", label: "4 - 困难" },
+    { value: "5", label: "5 - 非常困难" },
   ];
 
   const typeOptions = [
-    { value: "free", label: "Free Recall" },
-    { value: "qa", label: "Q&A" },
-    { value: "fill-blank", label: "Fill in Blanks" },
+    { value: "free", label: "自由回忆" },
+    { value: "qa", label: "问答" },
+    { value: "fill-blank", label: "填空" },
   ];
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Review Recitation Units</h1>
+        <h1 className="text-3xl font-bold">复习背诵单元</h1>
         <p className="text-muted-foreground mt-1">
-          Review and edit the AI-generated recitation units before starting your study.
+          在开始学习前，查看和编辑 AI 生成的背诵单元。
         </p>
       </div>
 
@@ -136,26 +136,26 @@ function ReviewUnitsContent() {
           <CardContent className="py-12 text-center">
             <BookOpen className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">
-              Select a document to review its recitation units.
+              请选择一个文档来查看其背诵单元。
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              First create a project and paste a document to generate units.
+              请先创建项目并粘贴文档以生成单元。
             </p>
             <Button className="mt-4" onClick={() => router.push("/paste-document")}>
-              Go to Paste Document
+              前往粘贴文档
             </Button>
           </CardContent>
         </Card>
       ) : loading ? (
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground">Loading units...</p>
+          <p className="text-muted-foreground">正在加载单元...</p>
         </div>
       ) : units.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Sparkles className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No units found for this document.</p>
+            <p className="text-muted-foreground">该文档没有找到背诵单元。</p>
             <Button
               className="mt-4"
               onClick={async () => {
@@ -173,7 +173,7 @@ function ReviewUnitsContent() {
               }}
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              Generate Units
+              生成单元
             </Button>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ function ReviewUnitsContent() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {units.length} unit{units.length !== 1 ? "s" : ""} found
+              共找到 {units.length} 个单元
             </p>
             <div className="flex gap-2">
               <Button
@@ -190,7 +190,7 @@ function ReviewUnitsContent() {
                 onClick={() => router.push(`/study-plan?documentId=${selectedDocId}`)}
               >
                 <ArrowRight className="h-4 w-4 mr-2" />
-                Create Study Plan
+                创建学习计划
               </Button>
             </div>
           </div>
@@ -210,7 +210,7 @@ function ReviewUnitsContent() {
                       <div>
                         <CardTitle className="text-lg">{unit.title}</CardTitle>
                         <CardDescription>
-                          {unit.document?.title || "Document"}
+                          {unit.document?.title || "文档"}
                         </CardDescription>
                       </div>
                     </div>
@@ -226,12 +226,12 @@ function ReviewUnitsContent() {
                           }
                         >
                           {progress.status === "not_started"
-                            ? "Not Started"
+                            ? "未开始"
                             : progress.status === "learning"
-                            ? "Learning"
+                            ? "学习中"
                             : progress.status === "reviewing"
-                            ? "Reviewing"
-                            : "Mastered"}
+                            ? "复习中"
+                            : "已掌握"}
                         </Badge>
                       )}
                       <Button
@@ -248,7 +248,7 @@ function ReviewUnitsContent() {
                   {editingUnit === unit.id ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-medium">Title</label>
+                        <label className="text-xs font-medium">标题</label>
                         <Input
                           value={editForm.title}
                           onChange={(e) =>
@@ -257,7 +257,7 @@ function ReviewUnitsContent() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-medium">Source Text</label>
+                        <label className="text-xs font-medium">源文本</label>
                         <Textarea
                           value={editForm.sourceText}
                           onChange={(e) =>
@@ -268,7 +268,7 @@ function ReviewUnitsContent() {
                       </div>
                       <div>
                         <label className="text-xs font-medium">
-                          Keywords (comma separated)
+                          关键词（逗号分隔）
                         </label>
                         <Input
                           value={editForm.keywords}
@@ -279,7 +279,7 @@ function ReviewUnitsContent() {
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         <div>
-                          <label className="text-xs font-medium">Type</label>
+                          <label className="text-xs font-medium">类型</label>
                           <Select
                             value={editForm.recitationType}
                             onChange={(e) =>
@@ -292,7 +292,7 @@ function ReviewUnitsContent() {
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium">Difficulty</label>
+                          <label className="text-xs font-medium">难度</label>
                           <Select
                             value={editForm.difficulty?.toString()}
                             onChange={(e) =>
@@ -306,7 +306,7 @@ function ReviewUnitsContent() {
                         </div>
                         <div>
                           <label className="text-xs font-medium">
-                            Est. Minutes
+                            预计分钟
                           </label>
                           <Input
                             type="number"
@@ -326,7 +326,7 @@ function ReviewUnitsContent() {
                           size="sm"
                           onClick={() => setEditingUnit(null)}
                         >
-                          Cancel
+                          取消
                         </Button>
                         <Button
                           size="sm"
@@ -338,7 +338,7 @@ function ReviewUnitsContent() {
                           ) : (
                             <Save className="h-4 w-4 mr-1" />
                           )}
-                          Save
+                          保存
                         </Button>
                       </div>
                     </div>
@@ -347,17 +347,19 @@ function ReviewUnitsContent() {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {unit.estimatedMinutes} min
+                          {unit.estimatedMinutes} 分钟
                         </span>
                         <span>
-                          Difficulty: {"★".repeat(unit.difficulty)}
+                          难度：{"★".repeat(unit.difficulty)}
                           {"☆".repeat(5 - unit.difficulty)}
                         </span>
-                        <Badge variant="outline">{unit.recitationType}</Badge>
+                        <Badge variant="outline">
+                          {typeOptions.find((t) => t.value === unit.recitationType)?.label || unit.recitationType}
+                        </Badge>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                          Source Text:
+                          源文本：
                         </p>
                         <p className="text-sm text-muted-foreground line-clamp-3">
                           {unit.sourceText}

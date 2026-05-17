@@ -35,7 +35,7 @@ export default function ModelSettingsPage() {
         });
       }
     } catch (error) {
-      console.error("Failed to fetch model settings:", error);
+      console.error("获取模型设置失败:", error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ export default function ModelSettingsPage() {
         setTimeout(() => setSaved(false), 2000);
       }
     } catch (error) {
-      console.error("Failed to save model settings:", error);
+      console.error("保存模型设置失败:", error);
     } finally {
       setSaving(false);
     }
@@ -82,9 +82,9 @@ export default function ModelSettingsPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Model Settings</h1>
+        <h1 className="text-3xl font-bold">模型设置</h1>
         <p className="text-muted-foreground mt-1">
-          Configure your OpenAI-compatible API connection.
+          配置您的 OpenAI 兼容 API 连接。
         </p>
       </div>
 
@@ -92,10 +92,10 @@ export default function ModelSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
-            API Configuration
+            API 配置
           </CardTitle>
           <CardDescription>
-            Set up your LLM provider. Supports any OpenAI-compatible API endpoint.
+            设置 LLM 提供商。支持任何 OpenAI 兼容的 API 端点。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -109,7 +109,7 @@ export default function ModelSettingsPage() {
               placeholder="https://api.openai.com/v1"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The base URL for your API provider. Defaults to OpenAI.
+              API 提供商的基础 URL。默认为 OpenAI。
             </p>
           </div>
 
@@ -137,13 +137,13 @@ export default function ModelSettingsPage() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Your API key is stored securely and never exposed to the frontend.
+              您的 API 密钥安全存储，不会暴露给前端。
             </p>
           </div>
 
           <div>
             <label className="text-sm font-medium mb-1 block">
-              Chat Model
+              对话模型
             </label>
             <Input
               value={settings.chatModel}
@@ -153,13 +153,13 @@ export default function ModelSettingsPage() {
               placeholder="gpt-4o-mini"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The model used for generating units and evaluating recitations.
+              用于生成单元和评估背诵的模型。
             </p>
           </div>
 
           <div>
             <label className="text-sm font-medium mb-1 block">
-              Embedding Model
+              嵌入模型
             </label>
             <Input
               value={settings.embeddingModel}
@@ -169,7 +169,7 @@ export default function ModelSettingsPage() {
               placeholder="text-embedding-3-small"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The model used for generating embeddings (for future vector search).
+              用于生成向量嵌入的模型（用于未来的向量搜索）。
             </p>
           </div>
 
@@ -177,17 +177,17 @@ export default function ModelSettingsPage() {
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                保存中...
               </>
             ) : saved ? (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Saved!
+                已保存！
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Settings
+                保存设置
               </>
             )}
           </Button>

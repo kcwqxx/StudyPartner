@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Upload, FileText } from "lucide-react";
 
 function PasteDocumentForm() {
   const router = useRouter();
@@ -22,18 +22,32 @@ function PasteDocumentForm() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetch("/api/projects")
-      .then((res) => res.json())
-      .then((data) => setProjects(data))
-      .catch(console.error);
+      .then((res) => {
+        if (!res.ok) throw new Error("获取项目列表失败");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setProjects(data);
+        } else {
+          console.error("Unexpected projects response:", data);
+          setProjects([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch projects:", err);
+        setProjects([]);
+      });
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !content.trim() || !projectId) {
-      setError("Title, content, and project are required");
+      setError("标题、内容和项目都是必填项");
       return;
     }
 
@@ -55,13 +69,13 @@ function PasteDocumentForm() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create document");
+        throw new Error(data.error || "创建文档失败");
       }
 
       const doc = await res.json();
-      setSuccess("Document created successfully!");
+      setSuccess("文档创建成功！");
 
-      // Auto-generate units
+      // 自动生成学习单元
       setGenerating(true);
       const genRes = await fetch(`/api/documents/${doc.id}/generate-units`, {
         method: "POST",
@@ -70,7 +84,7 @@ function PasteDocumentForm() {
       if (!genRes.ok) {
         const genData = await genRes.json();
         if (genData.error !== "Units already generated for this document") {
-          throw new Error(genData.error || "Failed to generate units");
+          throw new Error(genData.error || "生成学习单元失败");
         }
       }
 
@@ -84,27 +98,86 @@ function PasteDocumentForm() {
     }
   }
 
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !projectId) {
+      setError(projectId ? "请选择文件" : "请先选择项目");
+      return;
+    }
+
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      setError("文件大小不能超过 50MB");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("projectId", projectId);
+      if (title) formData.append("title", title);
+
+      const res = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "上传文件失败");
+      }
+
+      const doc = await res.json();
+      setSuccess(`文件"${doc.title}"上传成功！`);
+
+      // 自动生成学习单元
+      setGenerating(true);
+      const genRes = await fetch(`/api/documents/${doc.id}/generate-units`, {
+        method: "POST",
+      });
+
+      if (!genRes.ok) {
+        const genData = await genRes.json();
+        if (genData.error !== "Units already generated for this document") {
+          throw new Error(genData.error || "生成学习单元失败");
+        }
+      }
+
+      setGenerating(false);
+      router.push(`/review-units?documentId=${doc.id}`);
+    } catch (err: any) {
+      setError(err.message);
+      setGenerating(false);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Paste Study Material</h1>
+        <h1 className="text-3xl font-bold">添加学习材料</h1>
         <p className="text-muted-foreground mt-1">
-          Paste your learning material and let AI break it into recitation units.
+          粘贴文本或上传 PDF/DOCX/TXT 文件，AI 将自动划分学习单元。
         </p>
       </div>
 
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Document Content</CardTitle>
+          <CardTitle>上传文件</CardTitle>
           <CardDescription>
-            Select a project and paste your study material below.
+            支持 PDF、DOCX 和 TXT 格式，AI 将自动提取文字内容。
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Project *
+                所属项目 *
               </label>
               <Select
                 value={projectId}
@@ -113,17 +186,61 @@ function PasteDocumentForm() {
                   value: p.id,
                   label: p.title,
                 }))}
-                placeholder="Select a project..."
+                placeholder="选择项目..."
                 required
               />
             </div>
-
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Document Title *
+                文档标题（可选）
               </label>
               <Input
-                placeholder="e.g., Chapter 5: Cell Division Notes"
+                placeholder="不填则使用文件名"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="flex-1">
+                <div className="flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">
+                      {uploading ? "上传中..." : "点击选择文件"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PDF、DOCX 或 TXT（最大 50MB）
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={uploading || generating}
+                />
+              </label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>粘贴文本内容</CardTitle>
+          <CardDescription>
+            或者直接粘贴学习材料文本，AI 将自动分析并划分学习单元。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-1 block">
+                文档标题 *
+              </label>
+              <Input
+                placeholder="例如：第五章：细胞分裂笔记"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -132,10 +249,10 @@ function PasteDocumentForm() {
 
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Study Content *
+                学习内容 *
               </label>
               <Textarea
-                placeholder="Paste your study material here..."
+                placeholder="在此粘贴您的学习材料..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={15}
@@ -143,8 +260,8 @@ function PasteDocumentForm() {
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Paste textbook excerpts, lecture notes, or any study material.
-                The AI will analyze and split it into recitation units.
+                粘贴教材摘录、课堂笔记或任何学习材料，
+                AI 将分析并自动划分为背诵单元。
               </p>
             </div>
 
@@ -162,23 +279,23 @@ function PasteDocumentForm() {
                 variant="outline"
                 onClick={() => router.back()}
               >
-                Cancel
+                取消
               </Button>
-              <Button type="submit" disabled={loading || generating}>
+              <Button type="submit" disabled={loading || generating || uploading}>
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    保存中...
                   </>
                 ) : generating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating Units...
+                    正在生成学习单元...
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Save & Generate Units
+                    保存并生成学习单元
                   </>
                 )}
               </Button>

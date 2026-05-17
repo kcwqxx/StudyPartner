@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Loader2, Save, Bot } from "lucide-react";
 
@@ -13,6 +15,7 @@ export default function AgentSettingsPage() {
     hintLevel: "moderate",
     feedbackLength: "concise",
     language: "auto",
+    customPersona: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,10 +36,11 @@ export default function AgentSettingsPage() {
           hintLevel: data.hintLevel || "moderate",
           feedbackLength: data.feedbackLength || "concise",
           language: data.language || "auto",
+          customPersona: data.customPersona || "",
         });
       }
     } catch (error) {
-      console.error("Failed to fetch agent settings:", error);
+      console.error("获取教练设置失败:", error);
     } finally {
       setLoading(false);
     }
@@ -56,43 +60,44 @@ export default function AgentSettingsPage() {
         setTimeout(() => setSaved(false), 2000);
       }
     } catch (error) {
-      console.error("Failed to save agent settings:", error);
+      console.error("保存教练设置失败:", error);
     } finally {
       setSaving(false);
     }
   }
 
   const personaOptions = [
-    { value: "encouraging_tutor", label: "Encouraging Tutor" },
-    { value: "strict_professor", label: "Strict Professor" },
-    { value: "friendly_coach", label: "Friendly Coach" },
-    { value: "socratic_mentor", label: "Socratic Mentor" },
+    { value: "encouraging_tutor", label: "鼓励型导师" },
+    { value: "strict_professor", label: "严格型教授" },
+    { value: "friendly_coach", label: "友好型教练" },
+    { value: "socratic_mentor", label: "苏格拉底式导师" },
+    { value: "custom", label: "自定义风格" },
   ];
 
   const strictnessOptions = [
-    { value: "low", label: "Low (Lenient)" },
-    { value: "medium", label: "Medium (Balanced)" },
-    { value: "high", label: "High (Strict)" },
+    { value: "low", label: "宽松（宽容评分）" },
+    { value: "medium", label: "适中（平衡）" },
+    { value: "high", label: "严格（高要求）" },
   ];
 
   const hintOptions = [
-    { value: "minimal", label: "Minimal Hints" },
-    { value: "moderate", label: "Moderate Hints" },
-    { value: "detailed", label: "Detailed Hints" },
+    { value: "minimal", label: "最少提示" },
+    { value: "moderate", label: "适中提示" },
+    { value: "detailed", label: "详细提示" },
   ];
 
   const lengthOptions = [
-    { value: "concise", label: "Concise" },
-    { value: "detailed", label: "Detailed" },
-    { value: "comprehensive", label: "Comprehensive" },
+    { value: "concise", label: "简洁" },
+    { value: "detailed", label: "详细" },
+    { value: "comprehensive", label: "全面" },
   ];
 
   const languageOptions = [
-    { value: "auto", label: "Auto (Match Student)" },
-    { value: "en", label: "English" },
+    { value: "auto", label: "自动（匹配学生语言）" },
+    { value: "en", label: "英文" },
     { value: "zh", label: "中文" },
-    { value: "ja", label: "日本語" },
-    { value: "ko", label: "한국어" },
+    { value: "ja", label: "日语" },
+    { value: "ko", label: "韩语" },
   ];
 
   if (loading) {
@@ -109,9 +114,9 @@ export default function AgentSettingsPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Agent Settings</h1>
+        <h1 className="text-3xl font-bold">教练风格设置</h1>
         <p className="text-muted-foreground mt-1">
-          Customize your AI Recitation Coach's personality and behavior.
+          自定义您的 AI 背诵教练的个性和行为。
         </p>
       </div>
 
@@ -119,15 +124,15 @@ export default function AgentSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            Coach Personality
+            教练个性
           </CardTitle>
           <CardDescription>
-            Configure how your AI coach interacts with you during recitation sessions.
+            配置 AI 教练在背诵练习中与您互动的方式。
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <label className="text-sm font-medium mb-1 block">Persona</label>
+            <label className="text-sm font-medium mb-1 block">个性风格</label>
             <Select
               value={settings.persona}
               onChange={(e) =>
@@ -136,12 +141,29 @@ export default function AgentSettingsPage() {
               options={personaOptions}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The overall personality and teaching style of your AI coach.
+              教练的整体个性和教学风格。
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Strictness</label>
+            <label className="text-sm font-medium mb-1 block">自定义教练风格</label>
+            <Textarea
+              placeholder={`例如：你是一位严格的军事教官，要求准确率在95%以上才能通过。用简洁有力的语言给出评价，偶尔鼓励但保持高标准。`}
+              value={settings.customPersona}
+              onChange={(e) =>
+                setSettings({ ...settings, customPersona: e.target.value })
+              }
+              rows={4}
+              disabled={settings.persona !== "custom"}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              您可以自由编写教练的个性和行为描述。格式不限，AI 会按照您的指令行事。
+              选择"自定义风格"后，此输入才会生效。
+            </p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-1 block">严格程度</label>
             <Select
               value={settings.strictness}
               onChange={(e) =>
@@ -150,12 +172,12 @@ export default function AgentSettingsPage() {
               options={strictnessOptions}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              How strictly the coach evaluates your recitation responses.
+              教练评估您的背诵回答时的严格程度。
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Hint Level</label>
+            <label className="text-sm font-medium mb-1 block">提示级别</label>
             <Select
               value={settings.hintLevel}
               onChange={(e) =>
@@ -164,13 +186,13 @@ export default function AgentSettingsPage() {
               options={hintOptions}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              How much help the coach provides when you're stuck.
+              当您卡住时，教练提供多少帮助。
             </p>
           </div>
 
           <div>
             <label className="text-sm font-medium mb-1 block">
-              Feedback Length
+              反馈长度
             </label>
             <Select
               value={settings.feedbackLength}
@@ -180,12 +202,12 @@ export default function AgentSettingsPage() {
               options={lengthOptions}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              How detailed the coach's feedback should be.
+              教练反馈的详细程度。
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Language</label>
+            <label className="text-sm font-medium mb-1 block">语言</label>
             <Select
               value={settings.language}
               onChange={(e) =>
@@ -194,7 +216,7 @@ export default function AgentSettingsPage() {
               options={languageOptions}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              The language the coach uses for feedback and instructions.
+              教练使用的语言。
             </p>
           </div>
 
@@ -202,17 +224,17 @@ export default function AgentSettingsPage() {
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+                保存中...
               </>
             ) : saved ? (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Saved!
+                已保存！
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Settings
+                保存设置
               </>
             )}
           </Button>

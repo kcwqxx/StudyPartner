@@ -25,6 +25,34 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { unitId } = body;
+
+    const unit = await prisma.recitationUnit.findFirst({
+      where: { id: unitId, documentId: id },
+    });
+
+    if (!unit) {
+      return NextResponse.json({ error: "Unit not found" }, { status: 404 });
+    }
+
+    await prisma.recitationUnit.delete({
+      where: { id: unitId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/documents/[id]/units error:", error);
+    return NextResponse.json({ error: "Failed to delete unit" }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

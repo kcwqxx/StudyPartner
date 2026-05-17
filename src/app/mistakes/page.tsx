@@ -33,7 +33,7 @@ export default function MistakesPage() {
         setData(await res.json());
       }
     } catch (error) {
-      console.error("Failed to fetch mistakes:", error);
+      console.error("获取错题本数据失败:", error);
     } finally {
       setLoading(false);
     }
@@ -56,28 +56,28 @@ export default function MistakesPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Mistakes & Review</h1>
+        <h1 className="text-3xl font-bold">错题本</h1>
         <p className="text-muted-foreground mt-1">
-          Review units that need more practice and see your past mistakes.
+          查看需要加强练习的单元和过去的错误记录。
         </p>
       </div>
 
-      {/* Units Needing Review */}
+      {/* 需要复习的单元 */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Units Needing Review</span>
-            <Badge variant="warning">{mistakes.length} units</Badge>
+            <span>需要复习的单元</span>
+            <Badge variant="warning">{mistakes.length} 个单元</Badge>
           </CardTitle>
           <CardDescription>
-            Units that you haven't mastered yet.
+            您还未掌握的学习单元。
           </CardDescription>
         </CardHeader>
         <CardContent>
           {mistakes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No units need review. Great job!</p>
+              <p>没有需要复习的单元，太棒了！</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -103,10 +103,10 @@ export default function MistakesPage() {
                       )}
                     </div>
                     <div>
-                      <p className="font-medium">{item.unit?.title || "Unknown Unit"}</p>
+                      <p className="font-medium">{item.unit?.title || "未知单元"}</p>
                       <p className="text-sm text-muted-foreground">
-                        {item.unit?.document?.title || "No document"}
-                        {item.lastScore !== null && ` · Last score: ${item.lastScore}/100`}
+                        {item.unit?.document?.title || "无文档"}
+                        {item.lastScore !== null && ` · 上次得分：${item.lastScore}/100`}
                       </p>
                     </div>
                   </div>
@@ -121,10 +121,10 @@ export default function MistakesPage() {
                       }
                     >
                       {item.status === "not_started"
-                        ? "Not Started"
+                        ? "未开始"
                         : item.status === "learning"
-                        ? "Learning"
-                        : "Reviewing"}
+                        ? "学习中"
+                        : "复习中"}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -143,22 +143,22 @@ export default function MistakesPage() {
         </CardContent>
       </Card>
 
-      {/* Recent Failed Attempts */}
+      {/* 最近的失败尝试 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Recent Failed Attempts</span>
-            <Badge variant="destructive">{failedAttempts.length} attempts</Badge>
+            <span>最近的失败尝试</span>
+            <Badge variant="destructive">{failedAttempts.length} 次</Badge>
           </CardTitle>
           <CardDescription>
-            Your most recent recitation attempts that didn't pass.
+            您最近未通过的背诵尝试。
           </CardDescription>
         </CardHeader>
         <CardContent>
           {failedAttempts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <RefreshCw className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No failed attempts. Keep up the good work!</p>
+              <p>没有失败的尝试。继续保持！</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -172,7 +172,7 @@ export default function MistakesPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-medium">
-                            {attempt.session?.unit?.title || "Unit"}
+                            {attempt.session?.unit?.title || "单元"}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDateTime(attempt.createdAt)}
@@ -185,7 +185,7 @@ export default function MistakesPage() {
 
                       <div className="mb-2">
                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                          Your answer:
+                          您的回答：
                         </p>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {attempt.userInput}
@@ -195,7 +195,7 @@ export default function MistakesPage() {
                       {missingKeywords.length > 0 && (
                         <div className="mb-2">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
-                            Missing keywords:
+                            遗漏的关键词：
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {missingKeywords.map((kw: string, i: number) => (
@@ -210,7 +210,7 @@ export default function MistakesPage() {
                       {attempt.feedback && (
                         <div className="mb-2">
                           <p className="text-xs font-medium text-muted-foreground mb-1">
-                            Feedback:
+                            反馈：
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {attempt.feedback}
@@ -228,7 +228,7 @@ export default function MistakesPage() {
                         }
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
-                        Try Again
+                        重新尝试
                       </Button>
                     </CardContent>
                   </Card>

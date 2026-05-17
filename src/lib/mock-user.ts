@@ -3,28 +3,30 @@ import prisma from "./db";
 const MOCK_USER_ID = "mock-user-001";
 
 export async function getMockUserId(): Promise<string> {
-  const user = await prisma.user.findUnique({
+  // 使用 upsert 避免并发请求时的竞态条件
+  await prisma.user.upsert({
     where: { id: MOCK_USER_ID },
-  });
-  if (user) return MOCK_USER_ID;
-
-  await prisma.user.create({
-    data: {
+    update: {},
+    create: {
       id: MOCK_USER_ID,
       name: "Mock User",
       email: "user@example.com",
     },
   });
 
-  // Create default settings
-  await prisma.userModelSettings.create({
-    data: {
+  // 同时确保默认设置存在（使用 upsert 避免冲突）
+  await prisma.userModelSettings.upsert({
+    where: { userId: MOCK_USER_ID },
+    update: {},
+    create: {
       userId: MOCK_USER_ID,
     },
   });
 
-  await prisma.agentSettings.create({
-    data: {
+  await prisma.agentSettings.upsert({
+    where: { userId: MOCK_USER_ID },
+    update: {},
+    create: {
       userId: MOCK_USER_ID,
     },
   });

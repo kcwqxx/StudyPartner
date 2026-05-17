@@ -17,15 +17,15 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/create-project", label: "New Project", icon: FolderPlus },
-  { href: "/paste-document", label: "Paste Document", icon: FileText },
-  { href: "/review-units", label: "Review Units", icon: ListChecks },
-  { href: "/study-plan", label: "Study Plan", icon: Calendar },
-  { href: "/recitation-chat", label: "Recitation", icon: MessageSquare },
-  { href: "/mistakes", label: "Mistakes", icon: AlertTriangle },
-  { href: "/settings/agent", label: "Agent Settings", icon: Bot },
-  { href: "/settings/model", label: "Model Settings", icon: Brain },
+  { href: "/dashboard", label: "仪表盘", icon: LayoutDashboard },
+  { href: "/create-project", label: "新建项目", icon: FolderPlus },
+  { href: "/paste-document", label: "添加文档", icon: FileText },
+  { href: "/review-units", label: "复习单元", icon: ListChecks },
+  { href: "/study-plan", label: "学习计划", icon: Calendar },
+  { href: "/recitation-chat", label: "背诵练习", icon: MessageSquare },
+  { href: "/mistakes", label: "错题本", icon: AlertTriangle },
+  { href: "/settings/agent", label: "教练设置", icon: Bot },
+  { href: "/settings/model", label: "模型设置", icon: Brain },
 ];
 
 export function Sidebar() {
@@ -36,7 +36,7 @@ export function Sidebar() {
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Brain className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">AI Recitation Coach</span>
+          <span className="font-bold text-lg">AI 背诵教练</span>
         </Link>
       </div>
       <nav className="px-3 space-y-1">

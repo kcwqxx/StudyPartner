@@ -13,6 +13,7 @@ import {
   TrendingUp,
   ArrowRight,
   Plus,
+  Trash2,
 } from "lucide-react";
 
 interface DashboardData {
@@ -31,43 +32,71 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [projectsRes, tasksRes, mistakesRes] = await Promise.all([
-          fetch("/api/projects"),
-          fetch("/api/tasks/today"),
-          fetch("/api/mistakes"),
-        ]);
-
-        const projects = await projectsRes.json();
-        const todayTasks = await tasksRes.json();
-        const mistakes = await mistakesRes.json();
-
-        // Calculate stats from mistakes data
-        const allProgress = mistakes.mistakes || [];
-        const totalUnits = allProgress.length;
-        const masteredUnits = 0; // These are not in mistakes (they're mastered)
-        const learningUnits = allProgress.filter((p: any) => p.status === "learning").length;
-        const mistakesCount = (mistakes.failedAttempts || []).length;
-
-        setData({
-          projects,
-          todayTasks,
-          stats: {
-            totalUnits,
-            masteredUnits,
-            learningUnits,
-            mistakesCount,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, []);
+
+  async function fetchData() {
+    try {
+      const [projectsRes, tasksRes, mistakesRes] = await Promise.all([
+        fetch("/api/projects"),
+        fetch("/api/tasks/today"),
+        fetch("/api/mistakes"),
+      ]);
+
+      const projects = await projectsRes.json();
+      const todayTasks = await tasksRes.json();
+      const mistakes = await mistakesRes.json();
+
+      const allProgress = mistakes.mistakes || [];
+      const totalUnits = allProgress.length;
+      const masteredUnits = 0;
+      const learningUnits = allProgress.filter((p: any) => p.status === "learning").length;
+      const mistakesCount = (mistakes.failedAttempts || []).length;
+
+      setData({
+        projects,
+        todayTasks,
+        stats: {
+          totalUnits,
+          masteredUnits,
+          learningUnits,
+          mistakesCount,
+        },
+      });
+    } catch (error) {
+      console.error("获取仪表盘数据失败:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteProject(projectId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("确定要删除这个项目吗？此操作不可撤销，项目下所有文档和学习计划都将被删除。")) return;
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("删除项目失败:", error);
+    }
+  }
+
+  async function handleDeletePlan(planId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("确定要删除这个学习计划吗？")) return;
+    try {
+      const res = await fetch(`/api/study-plans/${planId}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("删除学习计划失败:", error);
+    }
+  }
 
   if (loading) {
     return (
@@ -86,28 +115,28 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      title: "Today's Tasks",
+      title: "今日任务",
       value: `${data?.todayTasks.completed || 0}/${data?.todayTasks.total || 0}`,
       icon: Calendar,
       color: "text-blue-600",
       bg: "bg-blue-100",
     },
     {
-      title: "Learning Units",
+      title: "学习中",
       value: data?.stats.learningUnits || 0,
       icon: BookOpen,
       color: "text-yellow-600",
       bg: "bg-yellow-100",
     },
     {
-      title: "Mastered",
+      title: "已掌握",
       value: data?.stats.masteredUnits || 0,
       icon: CheckCircle2,
       color: "text-green-600",
       bg: "bg-green-100",
     },
     {
-      title: "Need Review",
+      title: "待复习",
       value: data?.stats.mistakesCount || 0,
       icon: AlertTriangle,
       color: "text-red-600",
@@ -119,20 +148,20 @@ export default function DashboardPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">仪表盘</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's your study overview.
+            欢迎回来！以下是您的学习概况。
           </p>
         </div>
         <Link href="/create-project">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Project
+            新建项目
           </Button>
         </Link>
       </div>
 
-      {/* Stats Grid */}
+      {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -154,14 +183,14 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Today's Tasks */}
+      {/* 今日任务 */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Today's Study Tasks</span>
+            <span>今日学习任务</span>
             <Link href="/study-plan">
               <Button variant="outline" size="sm">
-                View Plan
+                查看计划
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
@@ -195,7 +224,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <Badge variant={item.completed ? "success" : "info"}>
-                    {item.completed ? "Done" : "Pending"}
+                    {item.completed ? "已完成" : "待完成"}
                   </Badge>
                 </div>
               ))}
@@ -203,24 +232,24 @@ export default function DashboardPage() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No tasks scheduled for today.</p>
+              <p>今天没有安排任务。</p>
               <p className="text-sm mt-1">
-                Create a project and study plan to get started.
+                创建一个项目和学习计划来开始学习吧。
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Recent Projects */}
+      {/* 最近项目 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Recent Projects</span>
+            <span>最近项目</span>
             <Link href="/create-project">
               <Button variant="outline" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                New
+                新建
               </Button>
             </Link>
           </CardTitle>
@@ -229,30 +258,41 @@ export default function DashboardPage() {
           {data?.projects && data.projects.length > 0 ? (
             <div className="space-y-3">
               {data.projects.slice(0, 5).map((project) => (
-                <Link
+                <div
                   key={project.id}
-                  href={`/paste-document?projectId=${project.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors group"
                 >
-                  <div>
-                    <p className="font-medium">{project.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {project.subject || "No subject"} &middot;{" "}
-                      {project._count.documents} documents
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
+                  <Link
+                    href={`/paste-document?projectId=${project.id}`}
+                    className="flex items-center justify-between flex-1"
+                  >
+                    <div>
+                      <p className="font-medium">{project.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {project.subject || "无分类"} · {project._count.documents} 个文档
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-2 text-red-500 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => handleDeleteProject(project.id, e)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No projects yet.</p>
+              <p>还没有项目。</p>
               <Link href="/create-project">
                 <Button className="mt-3" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Project
+                  创建您的第一个项目
                 </Button>
               </Link>
             </div>

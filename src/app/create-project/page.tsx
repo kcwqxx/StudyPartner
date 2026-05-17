@@ -20,7 +20,7 @@ export default function CreateProjectPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) {
-      setError("Project title is required");
+      setError("请填写项目名称");
       return;
     }
 
@@ -40,7 +40,7 @@ export default function CreateProjectPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create project");
+        throw new Error(data.error || "创建项目失败");
       }
 
       const project = await res.json();
@@ -55,27 +55,27 @@ export default function CreateProjectPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create New Project</h1>
+        <h1 className="text-3xl font-bold">创建新项目</h1>
         <p className="text-muted-foreground mt-1">
-          Set up a new study project to organize your learning materials.
+          创建一个新的学习项目来组织您的学习材料。
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Project Details</CardTitle>
+          <CardTitle>项目信息</CardTitle>
           <CardDescription>
-            Fill in the details for your study project.
+            填写学习项目的详细信息。
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Project Title *
+                项目名称 *
               </label>
               <Input
-                placeholder="e.g., Biology Chapter 5 - Cell Division"
+                placeholder="例如：生物学第五章 - 细胞分裂"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -84,10 +84,10 @@ export default function CreateProjectPage() {
 
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Subject
+                学科分类
               </label>
               <Input
-                placeholder="e.g., Biology, History, Programming"
+                placeholder="例如：生物、历史、编程"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
               />
@@ -95,10 +95,10 @@ export default function CreateProjectPage() {
 
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Description (Optional)
+                描述（可选）
               </label>
               <Textarea
-                placeholder="Brief description of what you want to study..."
+                placeholder="简要描述您要学习的内容..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -107,7 +107,7 @@ export default function CreateProjectPage() {
 
             <div>
               <label className="text-sm font-medium mb-1 block">
-                Target Completion Date
+                目标完成日期
               </label>
               <Input
                 type="date"
@@ -126,17 +126,17 @@ export default function CreateProjectPage() {
                 variant="outline"
                 onClick={() => router.back()}
               >
-                Cancel
+                取消
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
+                    创建中...
                   </>
                 ) : (
                   <>
-                    Create Project
+                    创建项目
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 )}

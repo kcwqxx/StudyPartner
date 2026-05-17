@@ -25,6 +25,7 @@ export interface AgentSettingsData {
   hintLevel: string;
   feedbackLength: string;
   language: string;
+  customPersona?: string;
 }
 
 export interface ModelSettingsData {

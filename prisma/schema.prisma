@@ -171,6 +171,8 @@ model AgentSettings {
   hintLevel      String   @default("moderate") // "minimal" | "moderate" | "detailed"
   feedbackLength String   @default("concise") // "concise" | "detailed" | "comprehensive"
   language       String   @default("auto") // "auto" | "en" | "zh" | "ja" etc.
+  customPersona  String?  // 用户自定义的教练风格描述
+  partnerName    String   @default("AI 背诵教练") // 背诵搭子的名字
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

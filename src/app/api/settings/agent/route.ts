@@ -18,7 +18,7 @@ export async function GET() {
     return NextResponse.json(settings);
   } catch (error) {
     console.error("GET /api/settings/agent error:", error);
-    return NextResponse.json({ error: "Failed to fetch agent settings" }, { status: 500 });
+    return NextResponse.json({ error: "获取教练设置失败" }, { status: 500 });
   }
 }
 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getMockUserId();
     const body = await request.json();
-    const { persona, strictness, hintLevel, feedbackLength, language } = body;
+    const { persona, strictness, hintLevel, feedbackLength, language, customPersona } = body;
 
     const settings = await prisma.agentSettings.upsert({
       where: { userId },
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         ...(hintLevel !== undefined && { hintLevel }),
         ...(feedbackLength !== undefined && { feedbackLength }),
         ...(language !== undefined && { language }),
+        ...(customPersona !== undefined && { customPersona }),
       },
       create: {
         userId,
@@ -44,12 +45,13 @@ export async function POST(request: NextRequest) {
         hintLevel: hintLevel || "moderate",
         feedbackLength: feedbackLength || "concise",
         language: language || "auto",
+        customPersona: customPersona || null,
       },
     });
 
     return NextResponse.json(settings);
   } catch (error) {
     console.error("POST /api/settings/agent error:", error);
-    return NextResponse.json({ error: "Failed to update agent settings" }, { status: 500 });
+    return NextResponse.json({ error: "更新教练设置失败" }, { status: 500 });
   }
 }

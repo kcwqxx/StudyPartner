@@ -20,6 +20,8 @@ import {
   Target,
 } from "lucide-react";
 import { getScoreBgColor } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Message {
   role: "coach" | "user" | "system";
@@ -50,20 +52,6 @@ function RecitationChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch all units
-    fetch("/api/projects")
-      .then((r) => r.json())
-      .then(async (projects) => {
-        const allUnits: any[] = [];
-        for (const p of projects) {
-          const docsRes = await fetch(`/api/documents`, { method: "GET" } as any);
-          // We'll just fetch units directly
-        }
-      })
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
     if (selectedUnitId) {
       loadUnit(selectedUnitId);
     }
@@ -76,10 +64,6 @@ function RecitationChatContent() {
   async function loadUnit(unitId: string) {
     setLoading(true);
     try {
-      // Get unit info from the document
-      const res = await fetch(`/api/documents`);
-      // We need to find the unit - let's try a different approach
-      // For now, start a session directly
       const sessionRes = await fetch("/api/recitation-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -97,26 +81,26 @@ function RecitationChatContent() {
         setMessages([
           {
             role: "coach",
-            content: `📚 **Let's start recitation!**
+            content: `📚 **开始背诵！**
 
-I'll be your coach for this session. Here's what we're working on:
+我来担任您的教练。以下是我们今天的学习内容：
 
-**Unit:** ${data.unit.title}
-**Type:** ${data.unit.recitationType}
-**Difficulty:** ${"★".repeat(data.unit.difficulty)}${"☆".repeat(5 - data.unit.difficulty)}
+**单元：** ${data.unit.title}
+**类型：** ${data.unit.recitationType}
+**难度：** ${"★".repeat(data.unit.difficulty)}${"☆".repeat(5 - data.unit.difficulty)}
 
-**Key concepts to cover:**
+**需要掌握的关键概念：**
 ${keywords.map((k: string) => `- ${k}`).join("\n")}
 
-**Source text for reference:**
+**原文参考：**
 > ${data.unit.sourceText.slice(0, 200)}${data.unit.sourceText.length > 200 ? "..." : ""}
 
-Go ahead and recite what you remember! Take your time and try to cover all the key concepts. 🎯`,
+现在开始背诵您记住的内容！尽量覆盖所有关键概念。🎯`,
           },
         ]);
       }
     } catch (error) {
-      console.error("Failed to load unit:", error);
+      console.error("加载单元失败:", error);
     } finally {
       setLoading(false);
     }
@@ -137,7 +121,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
         body: JSON.stringify({ userInput: input }),
       });
 
-      if (!res.ok) throw new Error("Failed to evaluate");
+      if (!res.ok) throw new Error("评估失败");
 
       const data = await res.json();
       const evalData = data.evaluation;
@@ -148,48 +132,48 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
         evaluation: evalData,
       };
 
-      // Build coach response based on evaluation
+      // 根据评估结果构建教练回复
       let coachResponse = "";
 
       if (evalData.passed) {
-        coachResponse += `✅ **Great job! You passed!** (Score: ${evalData.score}/100)\n\n`;
+        coachResponse += `✅ **做得好！您通过了！** (得分：${evalData.score}/100)\n\n`;
         if (evalData.score >= 80) {
-          coachResponse += "Excellent work! You have a solid understanding of this material. 🌟\n\n";
+          coachResponse += "太棒了！您对这部分内容掌握得很好。🌟\n\n";
         } else {
-          coachResponse += "Good effort! You got the main points, but there's room for improvement.\n\n";
+          coachResponse += "不错！您掌握了主要的要点，但还有提升空间。\n\n";
         }
       } else {
-        coachResponse += `❌ **Not quite there yet.** (Score: ${evalData.score}/100)\n\n`;
-        coachResponse += "Don't worry! Let's review what needs work.\n\n";
+        coachResponse += `❌ **还差一点。** (得分：${evalData.score}/100)\n\n`;
+        coachResponse += "别担心！我们来看看哪些地方需要加强。\n\n";
       }
 
       if (evalData.missingKeywords && evalData.missingKeywords.length > 0) {
-        coachResponse += `**Missing or weak areas:**\n`;
+        coachResponse += `**薄弱或遗漏的知识点：**\n`;
         evalData.missingKeywords.forEach((kw: string) => {
           coachResponse += `- ${kw}\n`;
         });
         coachResponse += "\n";
       }
 
-      coachResponse += `**Feedback:** ${evalData.feedback}\n\n`;
+      coachResponse += `**反馈：** ${evalData.feedback}\n\n`;
 
       if (evalData.nextAction === "next") {
-        coachResponse += "🎉 You're ready to move on to the next unit!";
+        coachResponse += "🎉 您已经准备好进入下一个单元了！";
       } else if (evalData.nextAction === "repeat") {
-        coachResponse += "🔄 Let's try again. Review the key concepts and give it another shot!";
+        coachResponse += "🔄 让我们再试一次。复习重点概念，再试一次！";
       } else {
-        coachResponse += "📖 Take some time to review the material, then try again.";
+        coachResponse += "📖 花点时间复习材料，然后再次尝试。";
       }
 
       coachMessage.content = coachResponse;
       setMessages((prev) => [...prev, coachMessage]);
     } catch (error) {
-      console.error("Evaluation error:", error);
+      console.error("评估错误:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "system",
-          content: "Sorry, there was an error evaluating your response. Please try again.",
+          content: "抱歉，评估您的回答时出错了。请再试一次。",
         },
       ]);
     } finally {
@@ -202,24 +186,22 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.evaluation?.nextAction === "next") {
-      // Move to next unit - for now just show completion
       setMessages((prev) => [
         ...prev,
         {
           role: "coach",
-          content: "🎉 **Session Complete!**\n\nYou've finished this recitation unit. You can:\n- Go to your **Study Plan** to continue\n- Review **Mistakes** to see areas for improvement\n- Start a new recitation session",
+          content: "🎉 **会话完成！**\n\n您已经完成了这个背诵单元。您可以：\n- 前往**学习计划**继续学习\n- 查看**错题本**了解需要改进的地方\n- 开始新的背诵",
         },
       ]);
       return;
     }
 
     if (lastMessage?.evaluation?.nextAction === "repeat") {
-      // Reset for another attempt
       setMessages((prev) => [
         ...prev,
         {
           role: "coach",
-          content: "🔄 **Let's try again!**\n\nReview the key concepts and give it another attempt. I believe you can do it! 💪",
+          content: "🔄 **再来一次！**\n\n复习重点概念，再试一次。我相信您能做到！💪",
         },
       ]);
     }
@@ -228,9 +210,9 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">AI Recitation Coach</h1>
+        <h1 className="text-3xl font-bold">AI 背诵教练</h1>
         <p className="text-muted-foreground mt-1">
-          Your personal AI coach will guide you through recitation sessions.
+          您的个人 AI 教练将引导您完成背诵练习。
         </p>
       </div>
 
@@ -238,18 +220,17 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
         <Card>
           <CardContent className="py-12 text-center">
             <Brain className="h-16 w-16 mx-auto mb-4 text-primary opacity-70" />
-            <h2 className="text-xl font-semibold mb-2">Ready to Start Reciting?</h2>
+            <h2 className="text-xl font-semibold mb-2">准备开始背诵了吗？</h2>
             <p className="text-muted-foreground mb-6">
-              Select a unit from your study plan to begin a recitation session.
-              Your AI coach will guide you through the process.
+              从学习计划中选择一个单元开始背诵。AI 教练将全程引导您。
             </p>
             <div className="flex flex-col items-center gap-3">
               <Button onClick={() => router.push("/study-plan")}>
                 <BookOpen className="h-4 w-4 mr-2" />
-                Go to Study Plan
+                前往学习计划
               </Button>
               <p className="text-sm text-muted-foreground">
-                Or click on any unit in your study plan to start reciting.
+                或者点击学习计划中的任何单元开始背诵。
               </p>
             </div>
           </CardContent>
@@ -257,11 +238,11 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
       ) : loading ? (
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground">Preparing your session...</p>
+          <p className="text-muted-foreground">正在准备会话...</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Unit Info Bar */}
+          {/* 单元信息栏 */}
           {currentUnit && (
             <Card>
               <CardContent className="p-4">
@@ -271,12 +252,12 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                     <div>
                       <p className="font-medium">{currentUnit.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {currentUnit.recitationType} · {currentUnit.estimatedMinutes} min
+                        {currentUnit.recitationType} · {currentUnit.estimatedMinutes} 分钟
                       </p>
                     </div>
                   </div>
                   <Badge variant="outline">
-                    Difficulty: {"★".repeat(currentUnit.difficulty)}
+                    难度：{"★".repeat(currentUnit.difficulty)}
                     {"☆".repeat(5 - currentUnit.difficulty)}
                   </Badge>
                 </div>
@@ -284,7 +265,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
             </Card>
           )}
 
-          {/* Chat Messages */}
+          {/* 聊天消息区域 */}
           <Card className="min-h-[400px] max-h-[600px] overflow-y-auto">
             <CardContent className="p-4 space-y-4">
               {messages.map((msg, index) => (
@@ -307,19 +288,21 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                       <div className="flex items-center gap-2 mb-2">
                         <Brain className="h-4 w-4 text-primary" />
                         <span className="text-xs font-semibold text-primary">
-                          AI Coach
+                          AI 教练
                         </span>
                       </div>
                     )}
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {msg.content}
+                    <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
                     </div>
 
-                    {/* Evaluation Results */}
+                    {/* 评估结果 */}
                     {msg.evaluation && (
                       <div className="mt-3 pt-3 border-t border-border space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Score:</span>
+                          <span className="text-sm font-medium">得分：</span>
                           <Badge className={getScoreBgColor(msg.evaluation.score)}>
                             {msg.evaluation.score}/100
                           </Badge>
@@ -333,7 +316,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                         {msg.evaluation.missingKeywords.length > 0 && (
                           <div>
                             <span className="text-xs font-medium text-muted-foreground">
-                              Missing Keywords:
+                              遗漏的关键词：
                             </span>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {msg.evaluation.missingKeywords.map((kw, i) => (
@@ -352,7 +335,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                               onClick={handleNextAction}
                             >
                               <ArrowRight className="h-3 w-3 mr-1" />
-                              Next Unit
+                              下一个单元
                             </Button>
                           )}
                           {msg.evaluation.nextAction === "repeat" && (
@@ -362,7 +345,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                               onClick={handleNextAction}
                             >
                               <RefreshCw className="h-3 w-3 mr-1" />
-                              Try Again
+                              再试一次
                             </Button>
                           )}
                         </div>
@@ -378,7 +361,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
                     <div className="flex items-center gap-2">
                       <Brain className="h-4 w-4 text-primary animate-pulse" />
                       <span className="text-sm text-muted-foreground">
-                        Evaluating your response...
+                        正在评估您的回答...
                       </span>
                       <Loader2 className="h-3 w-3 animate-spin" />
                     </div>
@@ -390,10 +373,10 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
             </CardContent>
           </Card>
 
-          {/* Input Area */}
+          {/* 输入区域 */}
           <div className="flex gap-3">
             <Textarea
-              placeholder="Type your recitation here... Try to cover all the key concepts!"
+              placeholder="在此输入您的背诵内容... 尽量覆盖所有关键概念！"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               onKeyDown={(e) => {
@@ -421,7 +404,7 @@ Go ahead and recite what you remember! Take your time and try to cover all the k
             </div>
           </div>
           <p className="text-xs text-muted-foreground text-center">
-            Press Enter to submit, Shift+Enter for new line
+            按 Enter 提交，Shift+Enter 换行
           </p>
         </div>
       )}
